@@ -1,0 +1,206 @@
+
+
+package TaskPac;
+
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+public class ProductController {
+	private Product selectedProduct;
+	
+	private String currentCustomerId;
+
+	
+	private List<Address> storedAddressList;
+
+	private Product_dao empDAO;
+
+	@Autowired
+	public ProductController(Product_dao e) {
+		empDAO = e;
+	}
+
+	@RequestMapping(value = "/c", method = RequestMethod.GET)
+	public String listEmployees(Model model) {
+		List<Product> products = empDAO.getAllProducts();
+
+		System.out.println(products.toString() + "iam in controller");
+		model.addAttribute("products", products);
+
+		return "ProductDisplay"; // Return the view name for displaying the list
+	}
+
+
+@RequestMapping(value = "/f", method = RequestMethod.GET)
+    public String listEmployee(@RequestParam("productId") String productId, Model model) {
+        List<Product> products = empDAO.getAllProducts();
+
+        // Find the product with the matching product ID
+        selectedProduct = null;
+        for (Product product : products) {
+            if (product.getProdId().equals(productId)) {
+                selectedProduct = product;
+                break;
+            }
+        }
+
+        if (selectedProduct != null) {
+            List<Product> selectedProductList = new ArrayList<>();
+            selectedProductList.add(selectedProduct);
+            model.addAttribute("Products", selectedProductList);
+        } else {
+            // Handle the case where the selected product was not found
+        }
+
+        return "full";
+    }
+
+	
+
+	@RequestMapping(value = "/customer", method = RequestMethod.GET)
+	public String listEmploye(Model model, HttpSession session) {
+
+		return "customer";
+	}
+
+	@RequestMapping(value = "/AddressDetails", method = RequestMethod.GET)
+	public String listEmploy(@RequestParam("customer_id") String customerId, Model model) {
+
+
+		storedAddressList = empDAO.getAddressesByCustomerId(customerId); // Assign the fetched address list
+
+    		model.addAttribute("a", storedAddressList);
+		
+
+		currentCustomerId = customerId;
+
+		
+
+		return "Address"; // Return the name of the view to be displayed
+	}
+
+
+
+	@RequestMapping(value = "/ProcessSelectedAddress", method = RequestMethod.POST)
+public String processSelectedAddress(@RequestParam("selectedAddressId") int selectedAddressId, Model model) {
+    // Find the selected address from the stored address list
+    Address selectedAddress = null;
+    for (Address address : storedAddressList) {
+        if (address.getAddressId() == selectedAddressId) {
+            selectedAddress = address;
+            break;
+        }
+    }
+
+    // Set the selected address in the model
+    model.addAttribute("selectedAddress", selectedAddress);
+
+    // Set the selected product in the model
+    model.addAttribute("selectedProduct", selectedProduct);
+
+    // Set the selected customer ID in the model
+    model.addAttribute("selectedCustomerId", selectedCustomerId);
+
+    return "ProcessSelectedAddress"; // The JSP page to display the details
+}
+
+}
+
+**************************************************JSP for selected one addresss****************************************************
+
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Address List</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Choose an Address</h2>
+        <form action="ProcessSelectedAddress" method="post">
+            <c:forEach items="${a}" var="address">
+                <div class="form-check">
+                    <input type="radio" class="form-check-input" name="selectedAddressId" value="${address.getAddressId()}">
+                    <label class="form-check-label">
+                        ${address.getStreetAddress()}, ${address.getCity()}, ${address.getState()} ${address.getPostalCode()}
+                    </label>
+                </div>
+            </c:forEach>
+            <button type="submit" class="btn btn-primary mt-3">Select Address</button>
+        </form>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+*************************************************JSP FOR display all details*****************************
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Selected Address, Product, and Customer Details</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Selected Address, Product, and Customer Details</h2>
+        
+        <!-- Display Selected Address Information -->
+        <h3>Selected Address:</h3>
+        <p><strong>Street Address:</strong> ${selectedAddress.streetAddress}</p>
+        <p><strong>City:</strong> ${selectedAddress.city}</p>
+        <p><strong>State:</strong> ${selectedAddress.state}</p>
+        <p><strong>Postal Code:</strong> ${selectedAddress.postalCode}</p>
+        
+        <!-- Display Selected Product Information -->
+        <h3>Selected Product:</h3>
+        <p><strong>Name:</strong> ${selectedProduct.name}</p>
+        <p><strong>Description:</strong> ${selectedProduct.description}</p>
+        <p><strong>HSN Code:</strong> ${selectedProduct.hsncode}</p>
+        <p><strong>Category:</strong> ${selectedProduct.category}</p>
+        <p><strong>Price:</strong> ${selectedProduct.price}</p>
+        <!-- ... Other product details ... -->
+        
+        <!-- Display Selected Customer ID -->
+        <h3>Selected Customer ID:</h3>
+        <p><strong>Customer ID:</strong> ${selectedCustomerId}</p>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
